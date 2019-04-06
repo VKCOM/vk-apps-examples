@@ -1,7 +1,8 @@
 import React from 'react';
-import {Div, File, FormLayout, Group, Panel, PanelHeader, ScreenSpinner, Select, View} from '@vkontakte/vkui';
+import {Div, File, FormLayout, Group, Panel, PanelHeader, ScreenSpinner, Select, Textarea, View} from '@vkontakte/vkui';
 import '@vkontakte/vkui/dist/vkui.css';
 import Icon24Camera from '@vkontakte/icons/dist/24/camera';
+import loadImage from 'blueimp-load-image';
 
 class App extends React.Component {
   constructor(props) {
@@ -10,10 +11,9 @@ class App extends React.Component {
     this.state = {
       image: '',
       text: '',
-      imageViewer: '',
       lang: 'rus',
       status: 'ready',
-      popout: null
+      popout: null,
     };
 
     this.recognize = this.recognize.bind(this);
@@ -32,17 +32,27 @@ class App extends React.Component {
       return;
     }
 
-    let image = e.target.files[0];
-    let reader = new FileReader();
-
-    reader.onloadend = () => {
-      this.setState({
-        image,
-        imageViewer: reader.result,
-      }, () => this.recognize());
+    let options = {
+      canvas: true
     };
+    let file = e.target.files[0];
+    loadImage.parseMetaData(file, (data) => {
+      if (data.exif) {
+        options.orientation = data.exif.get('Orientation');
+      }
+      loadImage(file, (img) => {
 
-    reader.readAsDataURL(image);
+        if (img.type === 'error') {
+          // clearUpload();
+          // ErrorFactory.setErrorMessage('', 'Please try another image.');
+        } else {
+          this.setState({
+            image: img.toDataURL(),
+          }, () => this.recognize());
+        }
+
+      }, options);
+    });
   }
 
   recognize() {
@@ -50,16 +60,15 @@ class App extends React.Component {
       return;
     }
 
+    this.setState({
+      popout: <ScreenSpinner/>,
+      status: 'progress',
+      text: ''
+    });
+
     window.Tesseract.recognize(this.state.image, {
         lang: this.state.lang
       })
-      .progress(() =>
-        this.setState({
-          popout: <ScreenSpinner/>,
-          status: 'progress',
-          text: ''
-        })
-      )
       .catch(err => console.error(err))
       .then(data => {
         this.setState({
@@ -85,23 +94,28 @@ class App extends React.Component {
     }
 
     return (
-      <Group title="Текст">
-        <Div>{result}</Div>
+      <Group title="Результат">
+        <FormLayout>
+          <Textarea top="Текст" value={result}/>
+        </FormLayout>
       </Group>
     );
   }
 
   renderImageBlock() {
-    let content = this.state.imageViewer ? (
-      <img style={{
-        maxWidth: '100%',
-        maxHeight: '100%'
-      }} alt="Изображение" src={this.state.imageViewer}/>
-    ) : 'Загрузите изображение для распознования текста 📷';
-
     return (<Group title="Изображение"> <Div style={{
       textAlign: 'center',
-    }}>{content}</Div></Group>);
+    }}>
+      <div style={{display: (!this.state.image ? 'none' : '')}}>
+        <img alt="Изображение" style={{
+          maxWidth: '100%',
+          maxHeight: '100%',
+        }} src={this.state.image}/>
+      </div>
+      <div style={{display: (this.state.image ? 'none' : '')}}>
+        Загрузите изображение для распознования текста 📷!
+      </div>
+    </Div></Group>);
   }
 
   render() {
