@@ -94,7 +94,7 @@ class App extends React.Component {
       <Div style={{
         textAlign: 'center',
       }}>
-        <img alt="Source" src={this.state.imageViewer}/>
+        <img style="width:100%;" alt="Source" src={this.state.imageViewer}/>
       </Div>
     </Group>) : '';
 
