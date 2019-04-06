@@ -1,15 +1,5 @@
 import React from 'react';
-import {
-  Div,
-  File,
-  FormLayout,
-  Group,
-  Panel,
-  PanelHeader,
-  ScreenSpinner,
-  Select,
-  View
-} from '@vkontakte/vkui';
+import {Div, File, FormLayout, Group, Panel, PanelHeader, ScreenSpinner, Select, View} from '@vkontakte/vkui';
 import '@vkontakte/vkui/dist/vkui.css';
 import Icon24Camera from '@vkontakte/icons/dist/24/camera';
 
@@ -22,6 +12,7 @@ class App extends React.Component {
       text: '',
       imageViewer: '',
       lang: 'rus',
+      status: 'ready',
       popout: null
     };
 
@@ -36,8 +27,13 @@ class App extends React.Component {
 
   imageChange(e) {
     e.preventDefault();
-    let reader = new FileReader();
+
+    if (!e.target.files || !e.target.files[0]) {
+      return;
+    }
+
     let image = e.target.files[0];
+    let reader = new FileReader();
 
     reader.onloadend = () => {
       this.setState({
@@ -59,7 +55,9 @@ class App extends React.Component {
       })
       .progress(() =>
         this.setState({
-          popout: <ScreenSpinner/>
+          popout: <ScreenSpinner/>,
+          status: 'progress',
+          text: ''
         })
       )
       .catch(err => console.error(err))
@@ -70,39 +68,53 @@ class App extends React.Component {
       })
       .finally(() => {
         this.setState({
-          popout: null
+          popout: null,
+          status: 'finished'
         })
       })
   }
 
   renderResultBlock() {
-    if (!this.state.text) {
+    let result = this.state.text;
+    if (!this.state.text && this.state.status === 'finished') {
+      result = 'Не удалось распознать текст. Попробуйте другое изображение.';
+    }
+
+    if (!result) {
       return '';
     }
 
     return (
       <Group title="Текст">
-        <Div>{this.state.text}</Div>
+        <Div>{result}</Div>
       </Group>
     );
   }
 
+  renderImageBlock() {
+    let content = this.state.imageViewer ? (
+      <img style={{
+        maxWidth: '100%',
+        maxHeight: '100%'
+      }} alt="Изображение" src={this.state.imageViewer}/>
+    ) : 'Загрузите изображение для распознования текста 📷';
+
+    return (<Group title="Изображение"> <Div style={{
+      textAlign: 'center',
+    }}>{content}</Div></Group>);
+  }
+
   render() {
     let textBlock = this.renderResultBlock();
+    let imageBlock = this.renderImageBlock();
 
-    let imageBlock = this.state.imageViewer ? (<Group title="Изображение">
-      <Div style={{
-        textAlign: 'center',
-      }}>
-        <img style="width:100%;" alt="Source" src={this.state.imageViewer}/>
-      </Div>
-    </Group>) : '';
 
     return (
       <View popout={this.state.popout} activePanel='main_panel'>
         <Panel id='main_panel'>
           <PanelHeader>Распознавание текста</PanelHeader>
-
+          {imageBlock}
+          {textBlock}
           <Group title="Настройки">
             <FormLayout>
               <Select top="Язык" status={this.state.lang ? 'valid' : 'error'} placeholder="Выберите язык"
@@ -116,8 +128,7 @@ class App extends React.Component {
               </File>
             </FormLayout>
           </Group>
-          {imageBlock}
-          {textBlock}
+
         </Panel>
       </View>
     );
