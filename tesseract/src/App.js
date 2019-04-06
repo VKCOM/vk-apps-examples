@@ -1,18 +1,13 @@
 import React from 'react';
 import {
-  Button,
   Div,
   File,
   FormLayout,
   Group,
-  Header,
-  Input,
-  ListItem,
   Panel,
   PanelHeader,
   ScreenSpinner,
   Select,
-  Spinner,
   View
 } from '@vkontakte/vkui';
 import '@vkontakte/vkui/dist/vkui.css';
@@ -36,8 +31,7 @@ class App extends React.Component {
   }
 
   changeLanguage(e) {
-    const {name, value} = e.currentTarget;
-    this.setState({lang: value}, () => this.recognize());
+    this.setState({lang: e.currentTarget.value}, () => this.recognize());
   }
 
   imageChange(e) {
@@ -100,7 +94,7 @@ class App extends React.Component {
       <Div style={{
         textAlign: 'center',
       }}>
-        <img src={this.state.imageViewer}/>
+        <img alt="Source" src={this.state.imageViewer}/>
       </Div>
     </Group>) : '';
 
