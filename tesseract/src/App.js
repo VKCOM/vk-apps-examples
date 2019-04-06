@@ -110,7 +110,7 @@ class App extends React.Component {
                 <option value="eng">Английский</option>
                 <option value="rus">Русский</option>
               </Select>
-              <File top="Загрузите ваше изображение" size="xl" before={<Icon24Camera/>}
+              <File top="Загрузите ваше изображение" accept="image/*" size="xl" before={<Icon24Camera/>}
                     onChange={this.imageChange}>
                 Открыть галерею
               </File>
